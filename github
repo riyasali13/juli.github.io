@@ -1,0 +1,519 @@
+#bfs
+from collections import defaultdict, deque
+
+class Graph:
+    def __init__(self):
+        self.graph = defaultdict(list)
+
+    def addEdge(self, u, v):
+        self.graph[u].append(v)
+
+    def bfs(self, start_vertex):
+        visited = set()
+        queue = deque()
+
+        visited.add(start_vertex)
+        queue.append(start_vertex)
+
+        while queue:
+            vertex = queue.popleft()
+            print(vertex, end=' ')
+
+            for neighbor in self.graph[vertex]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append(neighbor)
+
+# Example usage:
+g = Graph()
+g.addEdge(0, 1)
+g.addEdge(0, 2)
+g.addEdge(1, 2)
+g.addEdge(2, 0)
+g.addEdge(2, 3)
+g.addEdge(3, 3)
+
+print("BFS traversal starting from vertex 0:")
+g.bfs(0)
+
+'''______________________________________________________'''
+
+#dfs
+class Graph:
+    def __init__(self):
+        self.graph = {}
+
+    def addEdge(self, u, v):
+        if u not in self.graph:
+            self.graph[u] = []
+        self.graph[u].append(v)
+
+    def dfs(self, start_vertex):
+        visited = set()
+
+        def dfs_recursive(vertex):
+            visited.add(vertex)
+            print(vertex, end=' ')
+
+            if vertex in self.graph:
+                for neighbor in self.graph[vertex]:
+                    if neighbor not in visited:
+                        dfs_recursive(neighbor)
+
+        dfs_recursive(start_vertex)
+
+# Example usage:
+g = Graph()
+g.addEdge(0, 1)
+g.addEdge(0, 2)
+g.addEdge(1, 2)
+g.addEdge(2, 0)
+g.addEdge(2, 3)
+g.addEdge(3, 3)
+
+print("DFS traversal starting from vertex 0:")
+g.dfs(0)
+
+'''______________________________________________________'''
+# A* algorithm
+#import heapq
+
+class Node:
+    def __init__(self, data, level, fval):
+        self.data = data
+        self.level = level
+        self.fval = fval
+
+    def generate_child(self):
+        x, y = self.find(self.data, '_')
+        val_list = [[x, y-1], [x, y+1], [x-1, y], [x+1, y]]
+        children = []
+        for i in val_list:
+            child = self.shuffle(self.data, x, y, i[0], i[1])
+            if child is not None:
+                child_node = Node(child, self.level+1, 0)
+                children.append(child_node)
+        return children
+
+    def shuffle(self, puz, x1, y1, x2, y2):
+        if x2 >= 0 and x2 < len(self.data) and y2 >= 0 and y2 < len(self.data):
+            temp_puz = self.copy(puz)
+            temp = temp_puz[x2][y2]
+            temp_puz[x2][y2] = temp_puz[x1][y1]
+            temp_puz[x1][y1] = temp
+            return temp_puz
+        else:
+            return None
+
+    def copy(self, root):
+        temp = [list(row) for row in root]
+        return temp
+
+    def find(self, puz, x):
+        for i in range(0, len(self.data)):
+            for j in range(0, len(self.data)):
+                if puz[i][j] == x:
+                    return i, j
+
+class Puzzle:
+    def __init__(self, size):
+        self.n = size
+        self.open = []
+        self.closed = []
+
+    def accept(self):
+        puz = []
+        for i in range(0, self.n):
+            temp = input().split(" ")
+            puz.append(temp)
+        return puz
+
+    def f(self, start, goal):
+        return self.h(start.data, goal) + start.level
+
+    def h(self, start, goal):
+        temp = 0
+        for i in range(0, self.n):
+            for j in range(0, self.n):
+                if start[i][j] != goal[i][j] and start[i][j] != '_':
+                    temp += 1
+        return temp
+
+    def process(self):
+        print("Enter the start state matrix \n")
+        start = self.accept()
+        print("Enter the goal state matrix \n")
+        goal = self.accept()
+
+        start = Node(start, 0, 0)
+        start.fval = self.f(start, goal)
+        self.open.append(start)
+        print("\n\n")
+        while True:
+            cur = self.open[0]
+            print("")
+            print("  | ")
+            print("  | ")
+            print(" \\\'/")
+            print("  V  \n")
+            for i in cur.data:
+                print(" ".join(i))
+            if self.h(cur.data, goal) == 0:
+                break
+            for i in cur.generate_child():
+                i.fval = self.f(i, goal)
+                self.open.append(i)
+            self.closed.append(cur)
+            del self.open[0]
+            self.open.sort(key=lambda x: x.fval, reverse=False)
+
+puz = Puzzle(3)
+puz.process()
+
+'''Enter the start state matrix 
+
+1 2 3
+5 6 _
+7 8 4
+Enter the goal state matrix 
+
+1 2 3
+5 8 6
+_ 7 4   '''
+
+'''______________________________________________________'''
+#prims
+import sys
+
+class Graph:
+    def __init__(self, vertices):
+        self.V = vertices
+        self.graph = [[0 for column in range(vertices)] for row in range(vertices)]
+
+    def printMST(self, parent):
+        print("Edge \tWeight")
+        for i in range(1, self.V):
+            print(parent[i], "-", i, "\t", self.graph[i][parent[i]])
+
+    def minKey(self, key, mstSet):
+        min = sys.maxsize
+        for v in range(self.V):
+            if key[v] < min and mstSet[v] is False:
+                min = key[v]
+                min_index = v
+        return min_index
+
+    def primMST(self):
+        key = [sys.maxsize] * self.V
+        parent = [None] * self.V
+        key[0] = 0
+        mstSet = [False] * self.V
+        parent[0] = -1
+
+        for _ in range(self.V):
+            u = self.minKey(key, mstSet)
+            mstSet[u] = True
+            for v in range(self.V):
+                if self.graph[u][v] > 0 and mstSet[v] is False and key[v] > self.graph[u][v]:
+                    key[v] = self.graph[u][v]
+                    parent[v] = u
+
+        self.printMST(parent)
+
+g = Graph(5)
+g.graph = [
+    [0, 2, 0, 6, 0],
+    [2, 0, 3, 8, 5],
+    [0, 3, 0, 0, 7],
+    [6, 8, 0, 0, 9],
+    [0, 5, 7, 9, 0]
+]
+
+g.primMST()
+
+'''______________________________________________________'''
+
+#kruskal
+
+class Graph:
+    def __init__(self, vertices):
+        self.V = vertices
+        self.graph = []
+
+    def add_edge(self, u, v, w):
+        self.graph.append([u, v, w])
+
+    def find_parent(self, parent, i):
+        if parent[i] == i:
+            return i
+        return self.find_parent(parent, parent[i])
+
+    def union(self, parent, rank, x, y):
+        xroot = self.find_parent(parent, x)
+        yroot = self.find_parent(parent, y)
+
+        if rank[xroot] < rank[yroot]:
+            parent[xroot] = yroot
+        elif rank[xroot] > rank[yroot]:
+            parent[yroot] = xroot
+        else:
+            parent[yroot] = xroot
+            rank[xroot] += 1
+
+    def kruskal_mst(self):
+        result = []
+        i, e = 0, 0
+
+        self.graph = sorted(self.graph, key=lambda item: item[2])
+        parent = []
+        rank = []
+
+        for node in range(self.V):
+            parent.append(node)
+            rank.append(0)
+
+        while e < self.V - 1:
+            u, v, w = self.graph[i]
+            i = i + 1
+            x = self.find_parent(parent, u)
+            y = self.find_parent(parent, v)
+
+            if x != y:
+                e = e + 1
+                result.append([u, v, w])
+                self.union(parent, rank, x, y)
+
+        print("Edges in the Minimum Spanning Tree:")
+        for u, v, weight in result:
+            print(f"{u} - {v}  Weight: {weight}")
+
+
+g = Graph(4)
+g.add_edge(0, 1, 10)
+g.add_edge(0, 2, 6)
+g.add_edge(0, 3, 5)
+g.add_edge(1, 3, 15)
+g.add_edge(2, 3, 4)
+
+g.kruskal_mst()
+
+'''______________________________________________________'''
+#n Queen
+global N
+N = 4
+
+def printSolution(board):
+    for i in range(N):
+        for j in range(N):
+            print(board[i][j], end=' ')
+        print()
+
+def isSafe(board, row, col):
+    for i in range(col):
+        if board[row][i] == 1:
+            return False
+
+    for i, j in zip(range(row, -1, -1), range(col, -1, -1)):
+        if board[i][j] == 1:
+            return False
+
+    for i, j in zip(range(row, N, 1), range(col, -1, -1)):
+        if board[i][j] == 1:
+            return False
+
+    return True
+
+def solveNQUtil(board, col):
+    if col >= N:
+        return True
+
+    for i in range(N):
+        if isSafe(board, i, col):
+            board[i][col] = 1
+            if solveNQUtil(board, col + 1) == True:
+                return True
+            board[i][col] = 0
+
+    return False
+
+def solveNQ():
+    board = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+    ]
+
+    if solveNQUtil(board, 0) == False:
+        print("Solution does not exist")
+        return False
+
+    printSolution(board)
+    return True
+
+solveNQ()
+
+
+'''______________________________________________________'''
+#graph coloring
+G = [[0, 1, 1, 0, 1, 0],
+     [1, 0, 1, 1, 0, 1],
+     [1, 1, 0, 1, 1, 0],
+     [0, 1, 1, 0, 0, 1],
+     [1, 0, 1, 0, 0, 1],
+     [0, 1, 0, 1, 1, 0]]
+
+node = "abcdef"
+t_ = {}
+for i in range(len(G)):
+    t_[node[i]] = i
+
+degree = []
+for i in range(len(G)):
+    degree.append(sum(G[i]))
+
+colorDict = {}
+for i in range(len(G)):
+    colorDict[node[i]] = ["Blue", "Red", "Yellow", "Green"]
+
+sortedNode = []
+indeks = []
+
+for i in range(len(degree)):
+    _max = 0
+    j = 0
+    for j in range(len(degree)):
+        if j not in indeks:
+            if degree[j] > _max:
+                _max = degree[j]
+                idx = j
+    indeks.append(idx)
+    sortedNode.append(node[idx])
+
+theSolution = {}
+for n in sortedNode:
+    setTheColor = colorDict[n]
+    theSolution[n] = setTheColor[0]
+    adjacentNode = G[t_[n]]
+    for j in range(len(adjacentNode)):
+        if adjacentNode[j] == 1 and (setTheColor[0] in colorDict[node[j]]):
+            colorDict[node[j]].remove(setTheColor[0])
+
+for t, w in sorted(theSolution.items()):
+    print("Node", t, " = ", w)
+
+
+
+'''______________________________________________________'''
+
+#chatbot
+
+#import necessary libraries
+import io
+import random
+import string # to process standard python strings
+import warnings
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import warnings
+warnings.filterwarnings('ignore')
+
+
+import nltk
+from nltk.stem import WordNetLemmatizer
+nltk.download('popular', quiet=True) # for downloading packages
+
+
+# uncomment the following only the first time
+#nltk.download('punkt') # first-time use only
+#nltk.download('wordnet') # first-time use only
+
+
+
+
+#Reading in the corpus
+with open('chatbot.txt','r', encoding='utf8', errors ='ignore') as fin:
+    raw = fin.read().lower()
+
+
+#TOkenisation
+sent_tokens = nltk.sent_tokenize(raw)# converts to list of sentences 
+word_tokens = nltk.word_tokenize(raw)# converts to list of words
+
+
+# Preprocessing
+lemmer = WordNetLemmatizer()
+def LemTokens(tokens):
+    return [lemmer.lemmatize(token) for token in tokens]
+remove_punct_dict = dict((ord(punct), None) for punct in string.punctuation)
+def LemNormalize(text):
+    return LemTokens(nltk.word_tokenize(text.lower().translate(remove_punct_dict)))
+
+
+
+
+# Keyword Matching
+GREETING_INPUTS = ("hello", "hi", "greetings", "sup", "what's up","hey",)
+GREETING_RESPONSES = ["hi", "hey", "*nods*", "hi there", "hello", "I am glad! You are talking to me"]
+
+
+def greeting(sentence):
+    """If user's input is a greeting, return a greeting response"""
+    for word in sentence.split():
+        if word.lower() in GREETING_INPUTS:
+            return random.choice(GREETING_RESPONSES)
+
+
+
+
+# Generating response
+def response(user_response):
+    robo_response=''
+    sent_tokens.append(user_response)
+    TfidfVec = TfidfVectorizer(tokenizer=LemNormalize, stop_words='english')
+    tfidf = TfidfVec.fit_transform(sent_tokens)
+    vals = cosine_similarity(tfidf[-1], tfidf)
+    idx=vals.argsort()[0][-2]
+    flat = vals.flatten()
+    flat.sort()
+    req_tfidf = flat[-2]
+    if(req_tfidf==0):
+        robo_response=robo_response+"I am sorry! I don't understand you"
+        return robo_response
+    else:
+        robo_response = robo_response+sent_tokens[idx]
+        return robo_response
+
+
+flag=True
+print("ROBO: My name is Robo. I will answer your queries about Chatbots. If you want to exit, type Bye!")
+while(flag==True):
+    user_response = input()
+    user_response=user_response.lower()
+    if(user_response!='bye'):
+        if(user_response=='thanks' or user_response=='thank you' ):
+            flag=False
+            print("ROBO: You are welcome..")
+        else:
+            if(greeting(user_response)!=None):
+                print("ROBO: "+greeting(user_response))
+            else:
+                print("ROBO: ",end="")
+                print(response(user_response))
+                sent_tokens.remove(user_response)
+    else:
+        flag=False
+        print("ROBO: Bye! take care..")    
+        
+        
+        #add file chatbot.txt then run this code on colab
+
+
+'''______________________________________________________'''
+
+
+'''______________________________________________________'''
+
+
+
